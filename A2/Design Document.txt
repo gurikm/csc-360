@@ -1,0 +1,82 @@
+Design Document:
+1.How many threads are you going to use? Specify the task that you intend each thread to perform.
+
+	I will be using x + 4 threads where x is the number of costumers what we serve.
+
+2.Do the threads work independently? Or, is there an overall “controller” thread?
+
+	They work independently.
+
+3.How many mutexes are you going to use? Specify the operation that each mutex will guard.
+
+	I will be using 8 mutexs 1 for business 1 for economy 4 for the clerks 1 mutex to access the queue and 1 mutex to check the total.
+
+4.Will the main thread be idle? If not, what will it be doing?
+
+	Main thread is idle.
+
+5.How are you going to represent customers? what type of data structure will you use?
+
+	By using a typedef struct where I have the id, arrival time, service time and class type for the customer 
+	I will use a linked list of nodes for my data structure to store all the information.
+
+6.How are you going to ensure that data structures in your program will not be modified concurrently?
+
+	To make sure my data structures are not modified concurrently I will use mutex lock and unlock when working with the data structures.
+
+7.How many convars are you going to use? I will be using 7 convars
+ For each convar:
+(a)Describe the condition that the convar will represent.
+ 
+	4 of the convars will represent the clerks serving costumers  
+	2 of the convars represent the business and economy queue and 
+	1 convar will represent accessing the queue itself
+
+(b) Which mutex is associated with the convar? Why?
+
+	Each mutex has a convar except the total mutex. 
+	The rest have a convar you make sure the clerks do 
+	the access the lists when they are being add or removed from
+
+(c) What operation should be performed once pthreadcondwait()has been unblocked and re-acquired the mutex?
+	1. Find the clerk that has picked a customer and print the clerk id
+        2. Update the waiting time     							                     
+	3. usleep() 									            
+	4. print the clerk has finished serving the customer…..                                                           
+	5. use pthread_cond_signal() so the clerk can serve another customer                                 
+	6. pthread_exit(NULL)                                                                                                  
+	7.return NULL
+
+8.Briefly sketch the overall algorithm you will use. 
+Main function:
+1.	Create and initialize the mutexs and convars
+2.	Open the file containing the costumers information and add it to customer_info variables
+3.	Create clerk and customer threads using the information from customer_info
+4.	Join the customer thread back to main thread.
+5.	Output the wait times for the classes.
+Customer_entry:
+1.	Usleep until costumer arrives
+2.	Inform the user the customers ID and that they have arrived 
+3.	Determine which class they are in 
+4.	Customer will enter either business queue or economy queue
+5.	Update the queue length 
+6.	Customer waits until clerk is ready using pthread_cond_wait
+Depending on the queue_stat do the below:
+If(queue_stat[p_myInfo->class_type] == 1)
+7.	Pthread_mutex_lock(clerk1_mutex)
+8.	Pthread_cond_signal(clerk1_con)
+9.	Pthread_mutex_unlock(clerk1_mutex)
+10.	Pthread_exit(null)
+11.	Return NULL;
+Clerk_entry:
+1.	While(1)
+2.	Get the number of clerks
+3.	Lock the conditions using pthread_mutext_lock(queue_mutext) so clerk only works with one condition at a time
+4.	Pthread_mutex_unlock(queue_mutex) after
+5.	Send signal to business or economy queue using pthread_cond_broadcast()
+6.	Unlock the queue that has size !=0 
+7.	Check clerk_ID and do the below
+8.	Pthread_mutext_lock()
+9.	Pthread_cond_wait()
+10.	Pthread_mutex_unlock
+11.	Return NULL;
